@@ -1,0 +1,233 @@
+{
+  "name": "Тул: проверка свободных столиков",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Тул: проверка свободных столиков (ноды Google Calendar)\n24 столика уже вписаны в блок НАСТРОЙКИ в ноде **Разбор запроса**.\n1. В ноде **Занятость столика** выбери Google Calendar credential.\n2. Включи workflow, **Production URL** вебхука (без -test) — в тул проверки в ElevenLabs (POST).\n\nТело запроса: `date` (YYYY-MM-DD), `time` (HH:mm), `guests` (необязательно).",
+        "width": 660,
+        "height": 280,
+        "color": 4
+      },
+      "id": "b88f2324-aa6d-4471-88ff-9ef42bb65b89",
+      "name": "Как настроить",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -40,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "botsua-check-tables",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1dc74410-1d9d-485d-a785-6eb6fe668660",
+      "name": "Webhook от ElevenLabs",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "97a710a9-1071-461f-98fe-234bc582fdae"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================== НАСТРОЙКИ ==================\n// Держи этот блок одинаковым в обоих workflow (проверка и бронь).\nconst CONFIG = {\n  timezone: 'Europe/Kiev', // так этот пояс называет сам Google (ctz=Europe/Kiev в ссылках календарей)\n  durationMinutes: 120,   // сколько длится одна бронь\n  openTime: '10:00',      // самая ранняя бронь\n  closeTime: '23:00',     // бронь должна закончиться не позже этого времени\n  minLeadMinutes: 30,     // за сколько минут минимум можно бронировать\n  slotStepMinutes: 30,    // шаг, с которым ищем другое свободное время\n  maxGuestsPerTable: 4,   // больше гостей -> к администратору (0 = не проверять)\n  // ID календаря: Google Календарь -> Настройки -> календарь столика -> «Интеграция календаря» -> Идентификатор календаря\n  tables: [\n    { id: 'table_1', name: 'Столик 1', calendarId: '340134aa51cb3b991fe83b25ba6333b151274c3975e65ca9069285e545c81126@group.calendar.google.com' },\n    { id: 'table_2', name: 'Столик 2', calendarId: '4a4f54ccbbe3d9fcd81dba18c3c10dc623cc9081da22ebffbd24f6960fc7164b@group.calendar.google.com' },\n    { id: 'table_3', name: 'Столик 3', calendarId: 'ead2ae95a5a62e1bb7752e5b486f2282556b86e2afeb8488c9d0e819b0f8e4d3@group.calendar.google.com' },\n    { id: 'table_4', name: 'Столик 4', calendarId: 'c114acd71fb1f0bea5656041c3ab33877ead254cb9757f5886c828a4305dd6e3@group.calendar.google.com' },\n    { id: 'table_5', name: 'Столик 5', calendarId: 'c64fd8c99abf438c7e5c601099916d4639af4e349c2447f4d3714a6f9131d002@group.calendar.google.com' },\n    { id: 'table_6', name: 'Столик 6', calendarId: 'cdcf036866c9279f7a53814c00c39dc26f64377597b4141af30a5be730db8f6e@group.calendar.google.com' },\n    { id: 'table_7', name: 'Столик 7', calendarId: 'e0c91081234b7032769c99349a8f1340f790353c7bdc9b32c9b1154f5531829a@group.calendar.google.com' },\n    { id: 'table_8', name: 'Столик 8', calendarId: 'e093c709d1cd09a3d6f4e0b1f68df236662a3628ea98c7fea0ae8ee3b43ce249@group.calendar.google.com' },\n    { id: 'table_9', name: 'Столик 9', calendarId: '9f9d801dceac71afb258e866ca490a03bccec3a5aca8b9c7e62d9cb89b642c51@group.calendar.google.com' },\n    { id: 'table_10', name: 'Столик 10', calendarId: 'fab47f0153b40afb4c5c1760d1e9fe7193db5b1ffdde69665a99eba12312b426@group.calendar.google.com' },\n    { id: 'table_11', name: 'Столик 11', calendarId: '02849e2bd8a96308e7a8f159a3a4f454a7fdfe02c0808d99b28613c1de6b0920@group.calendar.google.com' },\n    { id: 'table_12', name: 'Столик 12', calendarId: '0d9bbb7a3c85bd9979d0170be41f3ecdfc35dc27059fcb63af706de03c2a3d6b@group.calendar.google.com' },\n    { id: 'table_13', name: 'Столик 13', calendarId: 'ff0ce1ef39c9b9c174bb7e7d6642fbba0e5d1408dbdb7f3a6308ef1ab61ccc5f@group.calendar.google.com' },\n    { id: 'table_14', name: 'Столик 14', calendarId: '21847c6cf9119593e84afd123993c4aa5ca25e6b92963ceedb3cff7b8b467cd2@group.calendar.google.com' },\n    { id: 'table_15', name: 'Столик 15', calendarId: '741f6e6cc11428e719cc087caa4eec7a43851809918ab4526642a851b0941635@group.calendar.google.com' },\n    { id: 'table_16', name: 'Столик 16', calendarId: '40b9767353000e5bac5ddff137be5e001be5cb7a617b3a8c1c9421282767ed13@group.calendar.google.com' },\n    { id: 'table_17', name: 'Столик 17', calendarId: '5da78c0af40423340324ba39d70a88e2d0ed304d901240df6ddaa6ece94d0815@group.calendar.google.com' },\n    { id: 'table_18', name: 'Столик 18', calendarId: 'bd968bb620315fc73520a742558216b2ce680bc7cd0ac69ea8ca0803981fd0ab@group.calendar.google.com' },\n    { id: 'table_19', name: 'Столик 19', calendarId: '83cf7f276b3d3f2135828acfe1834fe31551659020dc5247288abc69133985f4@group.calendar.google.com' },\n    { id: 'table_20', name: 'Столик 20', calendarId: 'e56ba7258ec30bd7d4d956e538c71e329cda1dbe91e36113d47bd64535d0b9e7@group.calendar.google.com' },\n    { id: 'table_21', name: 'Столик 21', calendarId: '05987ddf5ff1b0faa7fbe74f90250333920eb8f9e844e8888ec84f42295053f7@group.calendar.google.com' },\n    { id: 'table_22', name: 'Столик 22', calendarId: '03c1808e6fb883fa01dacf2113ca5739ba9e95c7df0854c47f8050fa447858e6@group.calendar.google.com' },\n    { id: 'table_23', name: 'Столик 23', calendarId: '646c663c6745119dbbc6e65640bd755a4130051354f76a7ebf05df4d89062c3f@group.calendar.google.com' },\n    { id: 'table_24', name: 'Столик 24', calendarId: 'd604c6b73281ab9c886ab1b3a0097625f0af5be5dcf334d159c9f1ce5554c28d@group.calendar.google.com' },\n  ],\n};\n// ================================================\n\nconst MODE = 'check'; // 'check' или 'book', не менять\n\nconst WEEKDAYS = ['понеділок', 'вівторок', 'середа', 'четвер', \"п'ятниця\", 'субота', 'неділя'];\nconst MONTHS = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];\n\nconst raw = $input.first().json;\nconst b = { ...(raw.query || {}), ...(raw.body || {}) };\nconst zone = CONFIG.timezone;\nconst now = DateTime.now().setZone(zone);\n\nconst fail = (message, extra = {}) => [{\n  json: { ok: false, ...(MODE === 'book' ? { booked: false } : { available: false }), message, ...extra },\n}];\n\nfunction parseDate(v) {\n  const s = String(v ?? '').trim().toLowerCase();\n  if (['сьогодні', 'сегодня', 'today'].includes(s)) return now.startOf('day');\n  if (['завтра', 'tomorrow'].includes(s)) return now.plus({ days: 1 }).startOf('day');\n  if (['післязавтра', 'послезавтра'].includes(s)) return now.plus({ days: 2 }).startOf('day');\n  let m = s.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/);\n  if (m) return DateTime.fromObject({ year: +m[1], month: +m[2], day: +m[3] }, { zone });\n  m = s.match(/^(\\d{1,2})[.\\/](\\d{1,2})(?:[.\\/](\\d{2,4}))?$/);\n  if (m) {\n    let year = m[3] ? +m[3] : now.year;\n    if (year < 100) year += 2000;\n    let d = DateTime.fromObject({ year, month: +m[2], day: +m[1] }, { zone });\n    if (!m[3] && d.isValid && d < now.startOf('day')) d = d.plus({ years: 1 });\n    return d;\n  }\n  return null;\n}\n\nfunction parseTime(v) {\n  const m = String(v ?? '').trim().match(/^(\\d{1,2})(?:[:.](\\d{2}))?$/);\n  if (!m) return null;\n  const hour = +m[1];\n  const minute = +(m[2] || 0);\n  if (hour > 23 || minute > 59) return null;\n  return { hour, minute };\n}\n\nconst day = parseDate(b.date);\nif (!day || !day.isValid) {\n  return fail('Не вдалося розпізнати дату. Уточніть дату й передайте її у форматі YYYY-MM-DD.');\n}\nconst t = parseTime(b.time);\nif (!t) {\n  return fail('Не вдалося розпізнати час. Уточніть час і передайте його у форматі HH:mm.');\n}\n\nlet guests = null;\nif (b.guests !== undefined && b.guests !== null && String(b.guests).trim() !== '') {\n  guests = parseInt(b.guests, 10);\n  if (isNaN(guests) || guests < 1) return fail('Уточніть кількість гостей.');\n}\nif (guests && CONFIG.maxGuestsPerTable && guests > CONFIG.maxGuestsPerTable) {\n  return fail(\n    `Онлайн-бронь доступна для компаній до ${CONFIG.maxGuestsPerTable} гостей. Для більшої компанії запропонуйте передати контакт адміністратору.`,\n    { needs_admin: true },\n  );\n}\n\nconst start = day.set({ hour: t.hour, minute: t.minute, second: 0, millisecond: 0 });\nconst end = start.plus({ minutes: CONFIG.durationMinutes });\nconst [oh, om] = CONFIG.openTime.split(':').map(Number);\nconst [ch, cm] = CONFIG.closeTime.split(':').map(Number);\nconst open = day.set({ hour: oh, minute: om, second: 0, millisecond: 0 });\nlet close = day.set({ hour: ch, minute: cm, second: 0, millisecond: 0 });\nif (close <= open) close = close.plus({ days: 1 });\n\nif (start < now.plus({ minutes: CONFIG.minLeadMinutes })) {\n  return fail(`Цей час уже минув або до нього менше ${CONFIG.minLeadMinutes} хвилин. Запропонуйте інший час.`);\n}\nif (start < open || end > close) {\n  return fail(\n    `Бронь можлива з ${CONFIG.openTime}, і вона має закінчитися до ${CONFIG.closeTime}. Одна бронь триває ${CONFIG.durationMinutes / 60} год. Запропонуйте інший час.`,\n  );\n}\n\nlet name = null;\nlet phone = null;\nlet comment = null;\nif (MODE === 'book') {\n  name = String(b.name ?? '').trim();\n  phone = String(b.phone ?? '').trim();\n  comment = String(b.comment ?? '').trim() || null;\n  if (!name) return fail(\"Потрібне ім'я гостя. Запитайте ім'я і повторіть бронювання.\");\n  if (phone.replace(/\\D/g, '').length < 9) {\n    return fail('Потрібен номер телефону гостя. Запитайте номер і повторіть бронювання.');\n  }\n}\n\nconst dateText = `${WEEKDAYS[start.weekday - 1]}, ${start.day} ${MONTHS[start.month - 1]}`;\n\nreturn [{\n  json: {\n    ok: true,\n    date: start.toFormat('yyyy-MM-dd'),\n    time: start.toFormat('HH:mm'),\n    end_time: end.toFormat('HH:mm'),\n    date_text: dateText,\n    start: start.toISO(),\n    end: end.toISO(),\n    open: open.toISO(),\n    close: close.toISO(),\n    guests,\n    name,\n    phone,\n    comment,\n    table_id: b.table_id ? String(b.table_id).trim() : null,\n    config: CONFIG,\n  },\n}];\n"
+      },
+      "id": "969ffc68-ef89-452a-9a06-5dfb7267937d",
+      "name": "Разбор запроса",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "a04e0f1c-b5cd-4f60-854a-7d8a0045fabd",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2190d169-6e5d-4e24-b94e-f617a6f4c392",
+      "name": "Запрос корректен?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Один элемент на каждый столик: нода Google Calendar смотрит занятость каждого\n// на весь рабочий день, чтобы при занятом времени сразу предложить ближайшее свободное.\nconst req = $input.first().json;\nreturn req.config.tables.map((t) => ({\n  json: {\n    id: t.id,\n    name: t.name,\n    calendarId: t.calendarId,\n    timeMin: req.open,\n    timeMax: req.close,\n  },\n}));\n"
+      },
+      "id": "076de328-6933-4fdd-95c2-b2e320830caa",
+      "name": "Столики на день",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "operation": "availability",
+        "calendar": {
+          "__rl": true,
+          "value": "={{ $json.calendarId }}",
+          "mode": "id"
+        },
+        "timeMin": "={{ $json.timeMin }}",
+        "timeMax": "={{ $json.timeMax }}",
+        "options": {
+          "outputFormat": "raw"
+        }
+      },
+      "id": "bc116510-6f6a-41ec-8564-e347cb62861a",
+      "name": "Занятость столика",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        -100
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Считаем, свободен ли хоть один столик на запрошенное время.\n// Если нет — ищем до 3 ближайших свободных вариантов в тот же день.\nconst req = $('Разбор запроса').first().json;\nconst cfg = req.config;\nconst zone = cfg.timezone;\nconst tables = $('Столики на день').all().map((i) => i.json);\nconst results = $input.all().map((i) => i.json);\nconst toMs = (iso) => DateTime.fromISO(iso).toMillis();\n\nconst errs = {};\nconst checked = tables.map((t, i) => {\n  const r = results[i] || {};\n  if (r.error || !r.calendars) {\n    const k = String(r.error ? (typeof r.error === 'string' ? r.error : JSON.stringify(r.error)) : 'пустой ответ Google').slice(0, 200);\n    errs[k] = (errs[k] || 0) + 1;\n    return { ...t, ok: false, busy: [] };\n  }\n  const cal = r.calendars[t.calendarId] || Object.values(r.calendars)[0] || {};\n  return { ...t, ok: true, busy: (cal.busy || []).map((x) => [toMs(x.start), toMs(x.end)]) };\n});\nconst usable = checked.filter((t) => t.ok);\nconst broken = checked.filter((t) => !t.ok).map((t) => t.name);\nconst diagnose = () => Object.entries(errs).map(([e, c]) => `${e} (${c} календ.)`).join('; ');\n\nif (!usable.length) {\n  return [{\n    json: {\n      ok: false,\n      available: false,\n      technical_error: true,\n      message: 'Технічна помилка: не вдалося перевірити календар. Вибачтеся й запропонуйте передати контакт адміністратору.',\n      debug_for_admin: diagnose(),\n    },\n  }];\n}\n\nconst isFree = (t, s, e) => !t.busy.some(([bs, be]) => s < be && e > bs);\nconst s = toMs(req.start);\nconst e = toMs(req.end);\nconst free = usable.filter((t) => isFree(t, s, e));\n\nconst base = {\n  ok: true,\n  date: req.date,\n  date_text: req.date_text,\n  time: req.time,\n  end_time: req.end_time,\n  ...(broken.length ? { unchecked_tables: broken, debug_for_admin: diagnose() } : {}),\n};\n\nif (free.length) {\n  return [{\n    json: {\n      ...base,\n      available: true,\n      table_id: free[0].id,\n      table_name: free[0].name,\n      free_tables: free.length,\n      message: `Є вільний столик: ${req.date_text}, ${req.time}–${req.end_time}. Можна бронювати.`,\n    },\n  }];\n}\n\nconst dur = cfg.durationMinutes * 60000;\nconst step = cfg.slotStepMinutes * 60000;\nconst earliest = DateTime.now().plus({ minutes: cfg.minLeadMinutes }).toMillis();\nconst open = toMs(req.open);\nconst close = toMs(req.close);\nconst options = [];\nfor (let t0 = open; t0 + dur <= close; t0 += step) {\n  if (t0 === s || t0 < earliest) continue;\n  if (usable.some((t) => isFree(t, t0, t0 + dur))) options.push(t0);\n}\nconst alternatives = options\n  .sort((a, b) => Math.abs(a - s) - Math.abs(b - s))\n  .slice(0, 3)\n  .sort((a, b) => a - b)\n  .map((ms) => DateTime.fromMillis(ms, { zone }).toFormat('HH:mm'));\n\nreturn [{\n  json: {\n    ...base,\n    available: false,\n    alternatives,\n    message: alternatives.length\n      ? `На ${req.time} усі столики зайняті. Вільний час цього дня: ${alternatives.join(', ')}. Запропонуйте гостю один із варіантів.`\n      : `На цей день (${req.date_text}) вільних столиків немає. Запропонуйте гостю інший день.`,\n  },\n}];\n"
+      },
+      "id": "4a789db7-d8a4-4f46-8b7d-b85c22b2482a",
+      "name": "Итог проверки",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "7297290c-812f-4955-a8d9-91347a6fbcbb",
+      "name": "Ответ агенту",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook от ElevenLabs": {
+      "main": [
+        [
+          {
+            "node": "Разбор запроса",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Разбор запроса": {
+      "main": [
+        [
+          {
+            "node": "Запрос корректен?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Запрос корректен?": {
+      "main": [
+        [
+          {
+            "node": "Столики на день",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ответ агенту",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Столики на день": {
+      "main": [
+        [
+          {
+            "node": "Занятость столика",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Занятость столика": {
+      "main": [
+        [
+          {
+            "node": "Итог проверки",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Итог проверки": {
+      "main": [
+        [
+          {
+            "node": "Ответ агенту",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Kiev"
+  },
+  "active": false,
+  "tags": []
+}
